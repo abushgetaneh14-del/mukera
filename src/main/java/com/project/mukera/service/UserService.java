@@ -6,9 +6,9 @@ import com.project.mukera.entity.User;
 import com.project.mukera.exception.UserNotFoundException;
 import com.project.mukera.repository.UserRepository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class UserService {
@@ -30,12 +30,10 @@ public class UserService {
         return toResponse(savedUser);
     }
 
-    public List<UserResponse> getAllUsers() {
+    public Page<UserResponse> getAllUsers(Pageable pageable) {
 
-        return userRepository.findAll()
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        return userRepository.findAll(pageable)
+                .map(this::toResponse);
     }
 
     public UserResponse getUserById(Long id) {
