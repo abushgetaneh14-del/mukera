@@ -1,15 +1,13 @@
 package com.project.mukera.repository;
 
 import com.project.mukera.entity.User;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    Page<User> findByNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
-            String name,
-            String email,
-            Pageable pageable
-    );
+    List<User> findByNameContainingIgnoreCase(String name);
+
+    List<User> findByEmailContainingIgnoreCase(String email);
 }

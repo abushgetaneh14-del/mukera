@@ -1,14 +1,13 @@
 package com.project.mukera.service;
 
-import com.project.mukera.dto.UserRequest;
-import com.project.mukera.dto.UserResponse;
 import com.project.mukera.entity.User;
 import com.project.mukera.exception.UserNotFoundException;
 import com.project.mukera.repository.UserRepository;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class UserService {
@@ -19,64 +18,56 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public UserResponse createUser(UserRequest request) {
-
-        User user = new User();
-        user.setName(request.getName());
-        user.setEmail(request.getEmail());
-
-        User savedUser = userRepository.save(user);
-
-        return toResponse(savedUser);
+    // Create user
+    public User saveUser(User user) {
+        return userRepository.save(user);
     }
 
-    public Page<UserResponse> getAllUsers(Pageable pageable) {
-
-        return userRepository.findAll(pageable)
-                .map(this::toResponse);
+    // Get all users
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
     }
 
-    public UserResponse getUserById(Long id) {
-
-        User user = userRepository.findById(id)
+    // Get user by ID
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
                 .orElseThrow(() ->
-                        new UserNotFoundException(
-                                "User with id " + id + " not found"));
-
-        return toResponse(user);
+                        new UserNotFoundException("User with id " + id + " not found"));
     }
 
-    public UserResponse updateUser(Long id, UserRequest request) {
-
-        User user = userRepository.findById(id)
+    // Update user
+    public User updateUser(Long id, User user) {
+        User existingUser = userRepository.findById(id)
                 .orElseThrow(() ->
-                        new UserNotFoundException(
-                                "User with id " + id + " not found"));
+                        new UserNotFoundException("User with id " + id + " not found"));
 
-        user.setName(request.getName());
-        user.setEmail(request.getEmail());
+        existingUser.setName(user.getName());
+        existingUser.setEmail(user.getEmail());
 
-        User updatedUser = userRepository.save(user);
-
-        return toResponse(updatedUser);
+        return userRepository.save(existingUser);
     }
 
+    // Delete user
     public void deleteUser(Long id) {
-
-        User user = userRepository.findById(id)
+        User existingUser = userRepository.findById(id)
                 .orElseThrow(() ->
-                        new UserNotFoundException(
-                                "User with id " + id + " not found"));
+                        new UserNotFoundException("User with id " + id + " not found"));
 
-        userRepository.delete(user);
+        userRepository.delete(existingUser);
     }
 
-    private UserResponse toResponse(User user) {
+    // Pagination and sorting
+    public Page<User> getUsers(Pageable pageable) {
+        return userRepository.findAll(pageable);
+    }
 
-        return new UserResponse(
-                user.getId(),
-                user.getName(),
-                user.getEmail()
-        );
+    // Search by name
+    public List<User> searchByName(String name) {
+        return userRepository.findByNameContainingIgnoreCase(name);
+    }
+
+    // Search by email
+    public List<User> searchByEmail(String email) {
+        return userRepository.findByEmailContainingIgnoreCase(email);
     }
 }
