@@ -1,6 +1,6 @@
 package com.project.mukera.controller;
 
-import com.project.mukera.entity.User;
+import com.project.mukera.dto.UserDTO;
 import com.project.mukera.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -25,28 +25,29 @@ public class UserController {
     // Create user
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public User createUser(@Valid @RequestBody User user) {
-        return userService.saveUser(user);
+    public UserDTO createUser(@Valid @RequestBody UserDTO userDTO) {
+        return userService.saveUser(userDTO);
     }
 
     // Get all users
     @GetMapping
-    public List<User> getAllUsers() {
+    public List<UserDTO> getAllUsers() {
         return userService.getAllUsers();
     }
 
     // Get user by ID
     @GetMapping("/{id}")
-    public User getUserById(@PathVariable Long id) {
+    public UserDTO getUserById(@PathVariable Long id) {
         return userService.getUserById(id);
     }
 
     // Update user
     @PutMapping("/{id}")
-    public User updateUser(
+    public UserDTO updateUser(
             @PathVariable Long id,
-            @Valid @RequestBody User user) {
-        return userService.updateUser(id, user);
+            @Valid @RequestBody UserDTO userDTO) {
+
+        return userService.updateUser(id, userDTO);
     }
 
     // Delete user
@@ -58,7 +59,7 @@ public class UserController {
 
     // Pagination and sorting
     @GetMapping("/page")
-    public Page<User> getUsers(
+    public Page<UserDTO> getUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "id") String sortBy,
@@ -75,13 +76,13 @@ public class UserController {
 
     // Search users by name
     @GetMapping("/search/name")
-    public List<User> searchByName(@RequestParam String name) {
+    public List<UserDTO> searchByName(@RequestParam String name) {
         return userService.searchByName(name);
     }
 
     // Search users by email
     @GetMapping("/search/email")
-    public List<User> searchByEmail(@RequestParam String email) {
+    public List<UserDTO> searchByEmail(@RequestParam String email) {
         return userService.searchByEmail(email);
     }
 }
