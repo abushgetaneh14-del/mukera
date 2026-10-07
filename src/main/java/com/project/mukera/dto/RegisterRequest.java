@@ -1,20 +1,9 @@
-package com.project.mukera.entity;
+package com.project.mukera.dto;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-@Entity
-@Table(name = "users")
-public class User {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class RegisterRequest {
 
     @NotBlank(message = "Name is required")
     private String name;
@@ -23,29 +12,16 @@ public class User {
     @Email(message = "Email must be valid")
     private String email;
 
-    
+    @NotBlank(message = "Password is required")
     private String password;
 
-    public User() {
+    public RegisterRequest() {
     }
 
-    public User(String name, String email) {
-        this.name = name;
-        this.email = email;
-    }
-
-    public User(String name, String email, String password) {
+    public RegisterRequest(String name, String email, String password) {
         this.name = name;
         this.email = email;
         this.password = password;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getName() {
