@@ -5,12 +5,13 @@ import com.project.mukera.dto.LoginResponse;
 import com.project.mukera.dto.RegisterRequest;
 import com.project.mukera.dto.UserDTO;
 import com.project.mukera.service.UserService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,108 +26,163 @@ public class UserController {
         this.userService = userService;
     }
 
-    // Create user
+    // =========================
+    // CREATE USER
+    // =========================
+
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserDTO createUser(@Valid @RequestBody UserDTO userDTO) {
-        return userService.saveUser(userDTO);
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<UserDTO> createUser(
+            @Valid @RequestBody UserDTO userDTO) {
+
+        UserDTO savedUser = userService.saveUser(userDTO);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(savedUser);
     }
 
-    // Register user with password
+    // =========================
+    // REGISTER
+    // =========================
+
     @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserDTO registerUser(
+    public ResponseEntity<UserDTO> register(
             @Valid @RequestBody RegisterRequest request) {
 
-        return userService.registerUser(request);
+        UserDTO user = userService.registerUser(request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(user);
     }
 
-    // Login user
+    // =========================
+    // LOGIN
+    // =========================
+
     @PostMapping("/login")
-    public LoginResponse loginUser(
+    public ResponseEntity<LoginResponse> login(
             @Valid @RequestBody LoginRequest request) {
 
-        return userService.loginUser(request);
+        LoginResponse response = userService.loginUser(request);
+
+        return ResponseEntity.ok(response);
     }
 
-    // Get all users
-    // Used when no pagination parameters are supplied
+    // =========================
+    // GET ALL USERS
+    // =========================
+
     @GetMapping
-    public List<UserDTO> getAllUsers() {
-        return userService.getAllUsers();
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<?> getAllUsers(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String direction) {
+
+        // Normal GET /users
+        if (page == null && size == null) {
+
+            return ResponseEntity.ok(
+                    userService.getAllUsers()
+            );
+        }
+
+        // Default values
+        int pageNumber = page != null ? page : 0;
+        int pageSize = size != null ? size : 5;
+
+        String sortField =
+                sortBy != null && !sortBy.isBlank()
+                        ? sortBy
+                        : "id";
+
+        Sort.Direction sortDirection =
+                "desc".equalsIgnoreCase(direction)
+                        ? Sort.Direction.DESC
+                        : Sort.Direction.ASC;
+
+        Pageable pageable = PageRequest.of(
+                pageNumber,
+                pageSize,
+                Sort.by(sortDirection, sortField)
+        );
+
+        return ResponseEntity.ok(
+                userService.getUsers(pageable)
+        );
     }
 
-    // Get users with pagination and sorting
-    // Example:
-    // GET /users?page=0&size=2&sortBy=name&direction=asc
-    @GetMapping(
-            params = {"page", "size", "sortBy", "direction"}
-    )
-    public Page<UserDTO> getUsers(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction) {
+    // =========================
+    // GET USER BY ID
+    // =========================
 
-        Sort sort = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
-
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        return userService.getUsers(pageable);
-    }
-
-    // Get users with pagination using /users/page
-    // Example:
-    // GET /users/page?page=0&size=5&sortBy=name&direction=asc
-    @GetMapping("/page")
-    public Page<UserDTO> getUsersPage(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction) {
-
-        Sort sort = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
-
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        return userService.getUsers(pageable);
-    }
-
-    // Get user by ID
     @GetMapping("/{id}")
-    public UserDTO getUserById(@PathVariable Long id) {
-        return userService.getUserById(id);
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<UserDTO> getUserById(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(
+                userService.getUserById(id)
+        );
     }
 
-    // Update user
+    // =========================
+    // UPDATE USER
+    // =========================
+
     @PutMapping("/{id}")
-    public UserDTO updateUser(
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<UserDTO> updateUser(
             @PathVariable Long id,
             @Valid @RequestBody UserDTO userDTO) {
 
-        return userService.updateUser(id, userDTO);
+        return ResponseEntity.ok(
+                userService.updateUser(id, userDTO)
+        );
     }
 
-    // Delete user
+    // =========================
+    // DELETE USER
+    // =========================
+
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@PathVariable Long id) {
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<Void> deleteUser(
+            @PathVariable Long id) {
+
         userService.deleteUser(id);
+
+        return ResponseEntity.noContent().build();
     }
 
-    // Search users by name
+    // =========================
+    // SEARCH BY NAME
+    // =========================
+
     @GetMapping("/search/name")
-    public List<UserDTO> searchByName(@RequestParam String name) {
-        return userService.searchByName(name);
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<List<UserDTO>> searchByName(
+            @RequestParam String name) {
+
+        return ResponseEntity.ok(
+                userService.searchByName(name)
+        );
     }
 
-    // Search users by email
+    // =========================
+    // SEARCH BY EMAIL
+    // =========================
+
     @GetMapping("/search/email")
-    public List<UserDTO> searchByEmail(@RequestParam String email) {
-        return userService.searchByEmail(email);
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<List<UserDTO>> searchByEmail(
+            @RequestParam String email) {
+
+        return ResponseEntity.ok(
+                userService.searchByEmail(email)
+        );
     }
 }
