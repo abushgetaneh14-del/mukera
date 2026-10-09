@@ -1,5 +1,6 @@
 package com.project.mukera.controller;
 
+import com.project.mukera.dto.AdminCreateUserRequest;
 import com.project.mukera.dto.UserDTO;
 import com.project.mukera.exception.UserNotFoundException;
 import com.project.mukera.service.CustomUserDetailsService;
@@ -104,15 +105,17 @@ class UserControllerTest {
         user.setName("Abush");
         user.setEmail("abush@example.com");
 
-        when(userService.saveUser(any(UserDTO.class)))
-                .thenReturn(user);
+        when(userService.createAdminUser(
+                any(AdminCreateUserRequest.class)
+        )).thenReturn(user);
 
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
                                     "name": "Abush",
-                                    "email": "abush@example.com"
+                                    "email": "abush@example.com",
+                                    "password": "SecurePass123"
                                 }
                                 """))
                 .andExpect(status().isCreated())
@@ -130,7 +133,8 @@ class UserControllerTest {
                         .content("""
                                 {
                                     "name": "",
-                                    "email": ""
+                                    "email": "",
+                                    "password": ""
                                 }
                                 """))
                 .andExpect(status().isBadRequest());
@@ -145,7 +149,8 @@ class UserControllerTest {
                         .content("""
                                 {
                                     "name": "Abush",
-                                    "email": "invalid-email"
+                                    "email": "invalid-email",
+                                    "password": "SecurePass123"
                                 }
                                 """))
                 .andExpect(status().isBadRequest());
@@ -236,8 +241,7 @@ class UserControllerTest {
         mockMvc.perform(get("/users/search/name")
                         .param("name", "Abush"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name")
-                        .value("Abush"));
+                .andExpect(jsonPath("$[0].name").value("Abush"));
     }
 
     @Test
@@ -295,11 +299,8 @@ class UserControllerTest {
                         .param("sortBy", "name")
                         .param("direction", "asc"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].name")
-                        .value("Abush"))
-                .andExpect(jsonPath("$.content[1].name")
-                        .value("John"))
-                .andExpect(jsonPath("$.totalElements")
-                        .value(2));
+                .andExpect(jsonPath("$.content[0].name").value("Abush"))
+                .andExpect(jsonPath("$.content[1].name").value("John"))
+                .andExpect(jsonPath("$.totalElements").value(2));
     }
 }

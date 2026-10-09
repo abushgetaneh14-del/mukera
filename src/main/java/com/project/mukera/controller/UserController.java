@@ -1,5 +1,6 @@
 package com.project.mukera.controller;
 
+import com.project.mukera.dto.AdminCreateUserRequest;
 import com.project.mukera.dto.LoginRequest;
 import com.project.mukera.dto.LoginResponse;
 import com.project.mukera.dto.RegisterRequest;
@@ -26,26 +27,20 @@ public class UserController {
         this.userService = userService;
     }
 
-    // =========================
-    // CREATE USER
-    // =========================
-
+    // CREATE USER - ADMIN ONLY
     @PostMapping
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<UserDTO> createUser(
-            @Valid @RequestBody UserDTO userDTO) {
+            @Valid @RequestBody AdminCreateUserRequest request) {
 
-        UserDTO savedUser = userService.saveUser(userDTO);
+        UserDTO savedUser = userService.createAdminUser(request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(savedUser);
     }
 
-    // =========================
     // REGISTER
-    // =========================
-
     @PostMapping("/register")
     public ResponseEntity<UserDTO> register(
             @Valid @RequestBody RegisterRequest request) {
@@ -57,10 +52,7 @@ public class UserController {
                 .body(user);
     }
 
-    // =========================
     // LOGIN
-    // =========================
-
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
             @Valid @RequestBody LoginRequest request) {
@@ -70,10 +62,7 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    // =========================
     // GET ALL USERS
-    // =========================
-
     @GetMapping
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<?> getAllUsers(
@@ -82,15 +71,10 @@ public class UserController {
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String direction) {
 
-        // Normal GET /users
         if (page == null && size == null) {
-
-            return ResponseEntity.ok(
-                    userService.getAllUsers()
-            );
+            return ResponseEntity.ok(userService.getAllUsers());
         }
 
-        // Default values
         int pageNumber = page != null ? page : 0;
         int pageSize = size != null ? size : 5;
 
@@ -110,29 +94,19 @@ public class UserController {
                 Sort.by(sortDirection, sortField)
         );
 
-        return ResponseEntity.ok(
-                userService.getUsers(pageable)
-        );
+        return ResponseEntity.ok(userService.getUsers(pageable));
     }
 
-    // =========================
     // GET USER BY ID
-    // =========================
-
     @GetMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<UserDTO> getUserById(
             @PathVariable Long id) {
 
-        return ResponseEntity.ok(
-                userService.getUserById(id)
-        );
+        return ResponseEntity.ok(userService.getUserById(id));
     }
 
-    // =========================
     // UPDATE USER
-    // =========================
-
     @PutMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<UserDTO> updateUser(
@@ -144,10 +118,7 @@ public class UserController {
         );
     }
 
-    // =========================
     // DELETE USER
-    // =========================
-
     @DeleteMapping("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> deleteUser(
@@ -158,31 +129,21 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    // =========================
     // SEARCH BY NAME
-    // =========================
-
     @GetMapping("/search/name")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<List<UserDTO>> searchByName(
             @RequestParam String name) {
 
-        return ResponseEntity.ok(
-                userService.searchByName(name)
-        );
+        return ResponseEntity.ok(userService.searchByName(name));
     }
 
-    // =========================
     // SEARCH BY EMAIL
-    // =========================
-
     @GetMapping("/search/email")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<List<UserDTO>> searchByEmail(
             @RequestParam String email) {
 
-        return ResponseEntity.ok(
-                userService.searchByEmail(email)
-        );
+        return ResponseEntity.ok(userService.searchByEmail(email));
     }
 }

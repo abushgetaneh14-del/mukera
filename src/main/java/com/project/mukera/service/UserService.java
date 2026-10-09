@@ -1,9 +1,11 @@
 package com.project.mukera.service;
 
+import com.project.mukera.dto.AdminCreateUserRequest;
 import com.project.mukera.dto.LoginRequest;
 import com.project.mukera.dto.LoginResponse;
 import com.project.mukera.dto.RegisterRequest;
 import com.project.mukera.dto.UserDTO;
+import com.project.mukera.entity.Role;
 import com.project.mukera.entity.User;
 import com.project.mukera.exception.UserNotFoundException;
 import com.project.mukera.repository.UserRepository;
@@ -48,25 +50,34 @@ public class UserService {
         );
     }
 
-    private User convertToEntity(UserDTO userDTO) {
-        User user = new User();
-        user.setId(userDTO.getId());
-        user.setName(userDTO.getName());
-        user.setEmail(userDTO.getEmail());
-        return user;
-    }
-
     public UserDTO registerUser(RegisterRequest request) {
 
         User user = new User();
 
         user.setName(request.getName());
         user.setEmail(request.getEmail());
-
-        // Hash the password before saving it
         user.setPassword(
                 passwordEncoder.encode(request.getPassword())
         );
+        user.setRole(Role.USER);
+
+        User savedUser = userRepository.save(user);
+
+        return convertToDTO(savedUser);
+    }
+
+    public UserDTO createAdminUser(AdminCreateUserRequest request) {
+
+        User user = new User();
+
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        user.setPassword(
+                passwordEncoder.encode(request.getPassword())
+        );
+
+        // Never accept a role directly from the request.
+        user.setRole(Role.USER);
 
         User savedUser = userRepository.save(user);
 
@@ -75,7 +86,6 @@ public class UserService {
 
     public LoginResponse loginUser(LoginRequest request) {
 
-        // Authenticate email and password
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
@@ -83,28 +93,17 @@ public class UserService {
                 )
         );
 
-        // Load the authenticated user
         UserDetails userDetails =
                 userDetailsService.loadUserByUsername(
                         request.getEmail()
                 );
 
-        // Generate JWT token
         String token = jwtService.generateToken(userDetails);
 
         return new LoginResponse(
                 "Login successful",
                 token
         );
-    }
-
-    public UserDTO saveUser(UserDTO userDTO) {
-
-        User user = convertToEntity(userDTO);
-
-        User savedUser = userRepository.save(user);
-
-        return convertToDTO(savedUser);
     }
 
     public List<UserDTO> getAllUsers() {
@@ -139,8 +138,7 @@ public class UserService {
         existingUser.setName(userDTO.getName());
         existingUser.setEmail(userDTO.getEmail());
 
-        User updatedUser =
-                userRepository.save(existingUser);
+        User updatedUser = userRepository.save(existingUser);
 
         return convertToDTO(updatedUser);
     }
