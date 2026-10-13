@@ -4,10 +4,13 @@ import com.project.mukera.dto.AdminCreateUserRequest;
 import com.project.mukera.dto.LoginRequest;
 import com.project.mukera.dto.LoginResponse;
 import com.project.mukera.dto.RegisterRequest;
+import com.project.mukera.dto.RefreshTokenRequest;
 import com.project.mukera.dto.UserDTO;
 import com.project.mukera.service.UserService;
+
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -52,12 +55,25 @@ public class UserController {
                 .body(user);
     }
 
-    // LOGIN
+    // LOGIN - RETURNS ACCESS AND REFRESH TOKENS
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
             @Valid @RequestBody LoginRequest request) {
 
         LoginResponse response = userService.loginUser(request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    // REFRESH ACCESS TOKEN
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponse> refreshToken(
+            @Valid @RequestBody RefreshTokenRequest request) {
+
+        LoginResponse response =
+                userService.refreshAccessToken(
+                        request.getRefreshToken()
+                );
 
         return ResponseEntity.ok(response);
     }
@@ -135,7 +151,9 @@ public class UserController {
     public ResponseEntity<List<UserDTO>> searchByName(
             @RequestParam String name) {
 
-        return ResponseEntity.ok(userService.searchByName(name));
+        return ResponseEntity.ok(
+                userService.searchByName(name)
+        );
     }
 
     // SEARCH BY EMAIL
@@ -144,6 +162,8 @@ public class UserController {
     public ResponseEntity<List<UserDTO>> searchByEmail(
             @RequestParam String email) {
 
-        return ResponseEntity.ok(userService.searchByEmail(email));
+        return ResponseEntity.ok(
+                userService.searchByEmail(email)
+        );
     }
 }

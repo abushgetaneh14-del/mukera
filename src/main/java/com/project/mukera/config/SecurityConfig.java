@@ -1,6 +1,7 @@
 package com.project.mukera.config;
 
 import com.project.mukera.security.JwtAuthenticationFilter;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -43,10 +44,11 @@ public class SecurityConfig {
                 // Configure public and protected endpoints
                 .authorizeHttpRequests(auth -> auth
 
-                        // Public endpoints
+                        // Public authentication and documentation endpoints
                         .requestMatchers(
                                 "/users/register",
                                 "/users/login",
+                                "/users/refresh",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()

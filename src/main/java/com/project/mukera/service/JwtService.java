@@ -1,6 +1,8 @@
+
 package com.project.mukera.service;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,8 +19,15 @@ public class JwtService {
     private static final String SECRET_KEY =
             "mukera-super-secret-key-for-jwt-authentication-2026";
 
-    private static final long EXPIRATION_TIME =
-            1000 * 60 * 60; // 1 hour
+    private static final String TOKEN_TYPE_CLAIM = "token_type";
+    private static final String ACCESS_TOKEN_TYPE = "access";
+    private static final String REFRESH_TOKEN_TYPE = "refresh";
+
+    private static final long ACCESS_TOKEN_EXPIRATION =
+            1000L * 60 * 15; // 15 minutes
+
+    private static final long REFRESH_TOKEN_EXPIRATION =
+            1000L * 60 * 60 * 24 * 7; // 7 days
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(
@@ -26,14 +35,36 @@ public class JwtService {
         );
     }
 
+    // Generate an access token
     public String generateToken(UserDetails userDetails) {
+        return generateToken(
+                userDetails,
+                ACCESS_TOKEN_EXPIRATION,
+                ACCESS_TOKEN_TYPE
+        );
+    }
+
+    // Generate a refresh token
+    public String generateRefreshToken(UserDetails userDetails) {
+        return generateToken(
+                userDetails,
+                REFRESH_TOKEN_EXPIRATION,
+                REFRESH_TOKEN_TYPE
+        );
+    }
+
+    private String generateToken(
+            UserDetails userDetails,
+            long expirationTime,
+            String tokenType) {
+
+        long now = System.currentTimeMillis();
 
         return Jwts.builder()
                 .subject(userDetails.getUsername())
-                .issuedAt(new Date())
-                .expiration(
-                        new Date(System.currentTimeMillis() + EXPIRATION_TIME)
-                )
+                .claim(TOKEN_TYPE_CLAIM, tokenType)
+                .issuedAt(new Date(now))
+                .expiration(new Date(now + expirationTime))
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -42,34 +73,78 @@ public class JwtService {
         return extractClaim(token, Claims::getSubject);
     }
 
+    // Extract the expiration date from a token
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
+
+    // Accept access tokens only
     public boolean isTokenValid(
             String token,
             UserDetails userDetails) {
 
-        final String username = extractUsername(token);
+        try {
+            Claims claims = extractAllClaims(token);
 
-        return username.equals(userDetails.getUsername())
-                && !isTokenExpired(token);
+            String username = claims.getSubject();
+            String tokenType = claims.get(
+                    TOKEN_TYPE_CLAIM,
+                    String.class
+            );
+
+            Date expiration = claims.getExpiration();
+
+            return username != null
+                    && username.equals(userDetails.getUsername())
+                    && ACCESS_TOKEN_TYPE.equals(tokenType)
+                    && expiration != null
+                    && expiration.after(new Date());
+
+        } catch (JwtException | IllegalArgumentException exception) {
+            return false;
+        }
     }
 
-    private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+    // Accept refresh tokens only
+    public boolean isRefreshTokenValid(
+            String token,
+            UserDetails userDetails) {
+
+        try {
+            Claims claims = extractAllClaims(token);
+
+            String username = claims.getSubject();
+            String tokenType = claims.get(
+                    TOKEN_TYPE_CLAIM,
+                    String.class
+            );
+
+            Date expiration = claims.getExpiration();
+
+            return username != null
+                    && username.equals(userDetails.getUsername())
+                    && REFRESH_TOKEN_TYPE.equals(tokenType)
+                    && expiration != null
+                    && expiration.after(new Date());
+
+        } catch (JwtException | IllegalArgumentException exception) {
+            return false;
+        }
     }
 
-    private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+    private Claims extractAllClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     private <T> T extractClaim(
             String token,
             Function<Claims, T> claimsResolver) {
 
-        final Claims claims = Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
+        Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 }

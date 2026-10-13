@@ -1,3 +1,4 @@
+
 package com.project.mukera.security;
 
 import com.project.mukera.service.CustomUserDetailsService;
@@ -24,7 +25,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     public JwtAuthenticationFilter(
             JwtService jwtService,
             CustomUserDetailsService userDetailsService) {
-
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
     }
@@ -36,41 +36,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
-        final String authHeader =
-                request.getHeader("Authorization");
+        String authHeader = request.getHeader("Authorization");
 
-        // No Authorization header
-        if (authHeader == null ||
-                !authHeader.startsWith("Bearer ")) {
-
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Extract token
-        final String jwtToken =
-                authHeader.substring(7);
+        String jwtToken = authHeader.substring(7);
 
         try {
+            String email = jwtService.extractUsername(jwtToken);
 
-            // Extract email from JWT
-            final String email =
-                    jwtService.extractUsername(jwtToken);
+            if (email != null
+                    && SecurityContextHolder.getContext()
+                    .getAuthentication() == null) {
 
-            // Only authenticate if there is no existing authentication
-            if (email != null &&
-                    SecurityContextHolder.getContext()
-                            .getAuthentication() == null) {
-
-                // Load user from database
                 UserDetails userDetails =
                         userDetailsService.loadUserByUsername(email);
 
-                // Validate JWT
-                if (jwtService.isTokenValid(
-                        jwtToken,
-                        userDetails)) {
-
+                if (jwtService.isTokenValid(jwtToken, userDetails)) {
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
                                     userDetails,
@@ -89,9 +74,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
         } catch (Exception exception) {
-
-            // Invalid or expired JWT.
-            // Leave the request unauthenticated.
+            // Invalid or expired tokens remain unauthenticated.
         }
 
         filterChain.doFilter(request, response);
