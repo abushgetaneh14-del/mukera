@@ -1,4 +1,3 @@
-
 package com.project.mukera.service;
 
 import io.jsonwebtoken.Claims;
@@ -11,6 +10,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Service
@@ -24,10 +24,10 @@ public class JwtService {
     private static final String REFRESH_TOKEN_TYPE = "refresh";
 
     private static final long ACCESS_TOKEN_EXPIRATION =
-            1000L * 60 * 15; // 15 minutes
+            1000L * 60 * 15;
 
     private static final long REFRESH_TOKEN_EXPIRATION =
-            1000L * 60 * 60 * 24 * 7; // 7 days
+            1000L * 60 * 60 * 24 * 7;
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(
@@ -35,7 +35,6 @@ public class JwtService {
         );
     }
 
-    // Generate an access token
     public String generateToken(UserDetails userDetails) {
         return generateToken(
                 userDetails,
@@ -44,7 +43,6 @@ public class JwtService {
         );
     }
 
-    // Generate a refresh token
     public String generateRefreshToken(UserDetails userDetails) {
         return generateToken(
                 userDetails,
@@ -56,11 +54,12 @@ public class JwtService {
     private String generateToken(
             UserDetails userDetails,
             long expirationTime,
-            String tokenType) {
-
+            String tokenType
+    ) {
         long now = System.currentTimeMillis();
 
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(userDetails.getUsername())
                 .claim(TOKEN_TYPE_CLAIM, tokenType)
                 .issuedAt(new Date(now))
@@ -69,39 +68,32 @@ public class JwtService {
                 .compact();
     }
 
-    // Extract the username (subject)
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // Extract the expiration date
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // Extract a specific claim
     public <T> T extractClaim(
             String token,
-            Function<Claims, T> claimsResolver) {
-
+            Function<Claims, T> claimsResolver
+    ) {
         Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    // Validate access tokens only
     public boolean isTokenValid(
             String token,
-            UserDetails userDetails) {
-
+            UserDetails userDetails
+    ) {
         try {
             Claims claims = extractAllClaims(token);
 
             String username = claims.getSubject();
-            String tokenType = claims.get(
-                    TOKEN_TYPE_CLAIM,
-                    String.class
-            );
-
+            String tokenType =
+                    claims.get(TOKEN_TYPE_CLAIM, String.class);
             Date expiration = claims.getExpiration();
 
             return username != null
@@ -115,20 +107,16 @@ public class JwtService {
         }
     }
 
-    // Validate refresh tokens only
     public boolean isRefreshTokenValid(
             String token,
-            UserDetails userDetails) {
-
+            UserDetails userDetails
+    ) {
         try {
             Claims claims = extractAllClaims(token);
 
             String username = claims.getSubject();
-            String tokenType = claims.get(
-                    TOKEN_TYPE_CLAIM,
-                    String.class
-            );
-
+            String tokenType =
+                    claims.get(TOKEN_TYPE_CLAIM, String.class);
             Date expiration = claims.getExpiration();
 
             return username != null
@@ -142,7 +130,6 @@ public class JwtService {
         }
     }
 
-    // Parse and verify the signed token
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())

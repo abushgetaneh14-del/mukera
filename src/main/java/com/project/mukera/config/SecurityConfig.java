@@ -1,6 +1,8 @@
+
 package com.project.mukera.config;
 
 import com.project.mukera.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,20 +33,30 @@ public class SecurityConfig {
             HttpSecurity http) throws Exception {
 
         http
-                // Disable CSRF because this is a REST API
+                // Disable CSRF because this is a REST API.
                 .csrf(csrf -> csrf.disable())
 
-                // JWT authentication is stateless
+                // Return 401 when authentication is required but missing.
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) ->
+                                response.sendError(
+                                        HttpServletResponse.SC_UNAUTHORIZED,
+                                        "Unauthorized"
+                                )
+                        )
+                )
+
+                // JWT authentication is stateless.
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
                         )
                 )
 
-                // Configure public and protected endpoints
+                // Configure public and protected endpoints.
                 .authorizeHttpRequests(auth -> auth
 
-                        // Public authentication and documentation endpoints
+                        // Public authentication and documentation endpoints.
                         .requestMatchers(
                                 "/users/register",
                                 "/users/login",
@@ -53,35 +65,35 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll()
 
-                        // Only ADMIN can create users
+                        // Only ADMIN can create users.
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/users/**"
                         ).hasRole("ADMIN")
 
-                        // Only ADMIN can update users
+                        // Only ADMIN can update users.
                         .requestMatchers(
                                 HttpMethod.PUT,
                                 "/users/**"
                         ).hasRole("ADMIN")
 
-                        // Only ADMIN can delete users
+                        // Only ADMIN can delete users.
                         .requestMatchers(
                                 HttpMethod.DELETE,
                                 "/users/**"
                         ).hasRole("ADMIN")
 
-                        // USER and ADMIN can read users
+                        // USER and ADMIN can read users.
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/users/**"
                         ).hasAnyRole("USER", "ADMIN")
 
-                        // All other requests require authentication
+                        // All other requests require authentication.
                         .anyRequest().authenticated()
                 )
 
-                // Run JWT filter before username/password authentication
+                // Run JWT filter before username/password authentication.
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
