@@ -69,16 +69,26 @@ public class JwtService {
                 .compact();
     }
 
+    // Extract the username (subject)
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // Extract the expiration date from a token
+    // Extract the expiration date
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // Accept access tokens only
+    // Extract a specific claim
+    public <T> T extractClaim(
+            String token,
+            Function<Claims, T> claimsResolver) {
+
+        Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    // Validate access tokens only
     public boolean isTokenValid(
             String token,
             UserDetails userDetails) {
@@ -105,7 +115,7 @@ public class JwtService {
         }
     }
 
-    // Accept refresh tokens only
+    // Validate refresh tokens only
     public boolean isRefreshTokenValid(
             String token,
             UserDetails userDetails) {
@@ -132,19 +142,12 @@ public class JwtService {
         }
     }
 
+    // Parse and verify the signed token
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-    }
-
-    private <T> T extractClaim(
-            String token,
-            Function<Claims, T> claimsResolver) {
-
-        Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
     }
 }

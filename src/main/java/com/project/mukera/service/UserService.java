@@ -1,4 +1,3 @@
-
 package com.project.mukera.service;
 
 import com.project.mukera.dto.AdminCreateUserRequest;
@@ -199,8 +198,7 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
                         new UserNotFoundException(
-                                "User with id " + id + " not found"
-                        )
+                                "User with id " + id + " not found"                        )
                 );
 
         return convertToDTO(user);
@@ -212,8 +210,7 @@ public class UserService {
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() ->
                         new UserNotFoundException(
-                                "User with id " + id + " not found"
-                        )
+                                "User with id " + id + " not found"                        )
                 );
 
         existingUser.setName(userDTO.getName());
@@ -230,8 +227,7 @@ public class UserService {
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() ->
                         new UserNotFoundException(
-                                "User with id " + id + " not found"
-                        )
+                                "User with id " + id + " not found"                        )
                 );
 
         userRepository.delete(existingUser);
