@@ -1,4 +1,3 @@
-
 FROM eclipse-temurin:21-jdk AS build
 
 WORKDIR /app
@@ -18,8 +17,13 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-COPY --from=build /app/target/*.jar app.jar
+RUN groupadd --system spring \
+    && useradd --system --gid spring spring
+
+COPY --from=build --chown=spring:spring /app/target/*.jar app.jar
+
+USER spring:spring
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]

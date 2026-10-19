@@ -1,4 +1,5 @@
 
+
 package com.project.mukera.security;
 
 import com.project.mukera.service.CustomUserDetailsService;
@@ -50,7 +51,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (email != null
                     && SecurityContextHolder.getContext()
-                    .getAuthentication() == null) {
+                            .getAuthentication() == null) {
 
                 UserDetails userDetails =
                         userDetailsService.loadUserByUsername(email);
